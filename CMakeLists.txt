@@ -1,15 +1,25 @@
 cmake_minimum_required(VERSION 4.3.0)
 
 project(
-    simdetect
+    SimDetect
     VERSION 0.0.1
     DESCRIPTION "EVM disassembler and analysis runner"
     LANGUAGES CXX)
 
-set (CMAKE_CXX_STANDARD 23)
-add_executable(SimDetect)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-target_sources(SimDetect
-    PRIVATE
-       ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+set (CMAKE_CXX_STANDARD 23)
+set (CMAKE_CXX_STANDARD_REQUIRED on)
+set (CMAKE_CXX_EXTENSIONS off)
+
+set (SOURCES
+src/main.cpp
+lib/logger/logger.h
+lib/logger/logger.cpp
+)
+
+add_executable(SimDetect ${SOURCES})
+
+target_include_directories(SimDetect PRIVATE
+    ${CMAKE_SOURCE_DIR}
 )
