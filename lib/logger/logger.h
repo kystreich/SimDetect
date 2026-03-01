@@ -10,7 +10,7 @@ namespace SimDetect::Logger {
         FATAL
     };
 
-    struct Log {
+    class Log {
         public:
             Log(Level level);
             ~Log();

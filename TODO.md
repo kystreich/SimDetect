@@ -1,10 +1,6 @@
 # TODO
-- [ ] Set up CMake
-- [ ] Set up linter/tidy
-- [ ] Set up build scripts
-- [ ] Make binary reader
-    - [ ] Read file into buffer
-    - [ ] Make byte reader/cursor or whatever
+- [x] Set up CMake
+- [x] Set up linter/tidy
 - [ ] Make disassembler
     - [ ] Use an array for each instruction, we can index using its opcode
     - [ ] Define input/output with a switch statement (?)
