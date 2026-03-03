@@ -8,7 +8,7 @@ namespace SimDetect::Logger {
     std::string ansiEscape() { return "\e[0m"; }
     
     std::string levelAnsi(Level level) {
-        switch(level) {
+        switch (level) {
             case (Level::ERR):      return "\e[0;101;30m";
             case (Level::FATAL):    return "\e[0;105;30m";
             case (Level::INFO):     return "\e[0;106;30m";
