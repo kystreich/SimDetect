@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sstream>
+
 namespace SimDetect::Logger {
     enum Level {
         OK,

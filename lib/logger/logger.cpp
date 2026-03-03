@@ -1,7 +1,7 @@
 /* Simplified version of tokyospliff's logger from Hell2025
    https://github.com/livinamuk/Hell2025/blob/main/Hell2025/Hell2025/src/Common/HellLogging.cpp
 */
-#include "iostream"
+#include <iostream>
 #include "logger.h"
 
 namespace SimDetect::Logger {
