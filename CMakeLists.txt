@@ -16,6 +16,17 @@ set (SOURCES
 src/main.cpp
 lib/logger/logger.h
 lib/logger/logger.cpp
+lib/common/constants.h
+lib/encoding/cbor.h
+lib/encoding/cbor.cpp
+lib/evm/opcode.h
+lib/evm/opcode.cpp
+lib/evm/disassembler.h
+lib/evm/disassembler.cpp
+lib/evm/cfg/block.h
+lib/evm/cfg/block.cpp
+lib/evm/cfg/cfg.h
+lib/evm/cfg/cfg.cpp
 )
 
 add_executable(SimDetect ${SOURCES})

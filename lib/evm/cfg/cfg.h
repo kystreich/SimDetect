@@ -6,7 +6,7 @@
 namespace SimDetect::Cfg {
     class ControlFlowGraph {
         private:
-            std::unordered_map<Offset, Block> blockMap;
+            std::unordered_map<Offset, Block> blockMap_;
 
         public:
             void addBlock(Offset offset);

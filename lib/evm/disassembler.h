@@ -16,6 +16,8 @@ namespace SimDetect::Evm {
         private:
             std::string_view stringBuffer_;
             Contract contract_;
+            std::optional<std::string> getMetadata();
+            
         public:
             explicit Disassembler(std::string_view inputBuffer) 
                 : stringBuffer_(inputBuffer)
