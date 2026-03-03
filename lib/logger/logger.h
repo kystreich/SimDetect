@@ -16,7 +16,11 @@ namespace SimDetect::Logger {
             Log(Level level);
             ~Log();
 
-            Log& operator<<(std::string_view input);
+            template <class T>
+            Log& operator<<(T input) {
+                messageString_ << input;
+                return *this;
+            }
         
         private:
             std::ostringstream messageString_;

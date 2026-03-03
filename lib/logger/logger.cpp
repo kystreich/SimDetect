@@ -32,11 +32,6 @@ namespace SimDetect::Logger {
     Log::Log(Level level) {
         messageString_ << levelAnsi(level) << "[ "  << levelName(level)  << " ]" << ansiEscape() << " ";
     }
-    
-    Log& Log::operator<<(std::string_view input) {
-        messageString_ << input;
-        return *this;
-    }
 
     Log::~Log() {
         std::cout << messageString_.str() << "\e[0m\n";
