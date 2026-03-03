@@ -18,6 +18,6 @@ namespace SimDetect::Cfg {
 
             auto begin() const;
             auto end() const;
-            std::size_t size();
+            std::size_t size() const;
     };
 }
