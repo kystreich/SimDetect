@@ -2,10 +2,9 @@
 #include <cassert>
 #include "disassembler.h"
 #include "../logger/logger.h"
+#include "opcode.h"
 
 namespace SimDetect::Evm {
-    // TODO: define more lengths here (?)
-    constexpr std::size_t AddressLength = 20;
 
     std::optional<std::uint8_t> byteFromChars(std::string_view input) {
         std::uint8_t returnVal;
@@ -30,12 +29,12 @@ namespace SimDetect::Evm {
         return (result.value() & 0xE0) == 0xA0;
     }
 
-    std::string_view removeHeader(std::string_view input) {
+    std::string removeHeader(std::string_view input) {
         if (input.starts_with("0x")) {
-            return input.substr(2);
+            return std::string(input.substr(2));
         }
 
-        return input;
+        return std::string(input);
     }
 
     std::optional<std::string> Disassembler::getMetadataString() {
@@ -81,7 +80,6 @@ namespace SimDetect::Evm {
                 bytesConsumed.push_back(result.value());
             } else {
                 cursor_ = cursorSnapshot;
-                Logger::err() << "Failed to read next byte"; 
                 return std::nullopt;
             }
         }
@@ -96,6 +94,15 @@ namespace SimDetect::Evm {
         {}
 
     Contract Disassembler::disassemble() {
-        
+        while (cursor_<stringBuffer_.size()) {
+            auto byte = getNextByte();
+            if (!byte.has_value()) {
+                return contract_;
+            }
+
+            contract_.instructionSet.push_back(resolveInstruction(byte.value()));
+        }
+
+        return contract_;
     }
 }

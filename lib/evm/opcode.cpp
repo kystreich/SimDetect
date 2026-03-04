@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <vector>
+#include <format>
 #include "opcode.h"
 #include "../common/constants.h"
+#include "../logger/logger.h"
 
 namespace SimDetect::Evm {
     // https://stackoverflow.com/a/48098543

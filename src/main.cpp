@@ -1,8 +1,25 @@
+#include "format"
+#include "fstream"
 #include "../lib/logger/logger.h"
 #include "../lib/evm/disassembler.h"
 
 int main() {
-    auto disa = SimDetect::Evm::Disassembler{"07a65726f20616464726581527f7373000000000000000000000000000000000000000000000000000000000000602082015291506119d4565b6020808252810161080681611b01565b601d81526000602082017f45524332303a20696e73756666696369656e7420616c6c6f77616e6365000000815291505b5060200190565b6020808252810161080681611b6b565b602681526000602082017f45524332303a207472616e7366657220616d6f756e742065786365656473206281527f616c616e63650000000000000000000000000000000000000000000000000000602082015291506119d4565b6020808252810161080681611bb2565b60208082527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657291019081526000611b9b565b6020808252810161080681611c1c56fea26469706673582212201313b2d37ecd414f05174c2820e6ad41504493217b3978606cc1058e9598d9e064736f6c634300081f0033"};
+    std::ifstream file("bytecode.txt");
+
+    if (!file.is_open()) {
+        SimDetect::Logger::err() << "Failed to open file";
+        return 1;
+    }
+
+    std::string line;
+    getline(file, line);
+
+    auto disa = SimDetect::Evm::Disassembler{line};
+    auto x = disa.disassemble();
+ 
+    SimDetect::Logger::info() << std::format("Disassembled {} instructions", x.instructionSet.size());
     
-    SimDetect::Logger::ok() << "Fresh start :)";
+    for (const auto& instruction : x.instructionSet) {
+        SimDetect::Logger::info() << std::format("{:#04x} | {} > {}", instruction.opcode, instruction.name, instruction.paramLookahead);
+    }
 }

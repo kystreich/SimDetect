@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 4.3.0)
+set(CMAKE_CXX_COMPILER "C:\\msys64\\ucrt64\\bin\\g++.exe")
 
 project(
     SimDetect

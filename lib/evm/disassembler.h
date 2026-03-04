@@ -14,8 +14,8 @@ namespace SimDetect::Evm {
     
     class Disassembler {
         private:
-            std::string_view stringBuffer_;
-            std::uint32_t cursor_;
+            std::string stringBuffer_;
+            std::uint64_t cursor_;
             Contract contract_;
             std::optional<std::string> getMetadataString();
             std::optional<std::uint8_t> getNextByte();
