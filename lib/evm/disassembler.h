@@ -17,16 +17,12 @@ namespace SimDetect::Evm {
             std::string_view stringBuffer_;
             std::uint32_t cursor_;
             Contract contract_;
-            std::optional<std::string> getMetadata();
+            std::optional<std::string> getMetadataString();
             std::optional<std::uint8_t> getNextByte();
             std::optional<std::vector<std::uint8_t>> getSomeBytes(uint8_t count);
             
         public:
-            explicit Disassembler(std::string_view inputBuffer) 
-                : stringBuffer_(inputBuffer)
-                , contract_{}
-                , cursor_{0}
-                {}
+            explicit Disassembler(std::string_view inputBuffer);
 
             Contract disassemble();
     };
