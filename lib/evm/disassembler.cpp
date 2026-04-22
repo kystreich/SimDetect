@@ -1,34 +1,28 @@
+#include <bit>
 #include <charconv>
 #include <cassert>
+#include <cstring>
+#include <span>
 #include "disassembler.h"
-#include "../logger/logger.h"
 #include "opcode.h"
+#include "../logger/logger.h"
 
 namespace SimDetect::Evm {
-
-    std::optional<std::uint8_t> byteFromChars(std::string_view input) {
-        std::uint8_t returnVal;
-        
-        auto result = std::from_chars(input.data(), input.data() + input.size(), returnVal, 16);
-        if (result.ec != std::errc{}) {
-            Logger::err() << "Error reading byte";
-            return std::nullopt;
-        }
-
-        return returnVal;
-    }
-
     // TODO: move this to cbor namespace
-    bool isCbor(std::string_view input) {
-        auto result = byteFromChars(input);
-        if (!result.has_value()) {
-            return false; // TODO: should probably handle this better
-        }
-
+    bool isCbor(Byte input) {
         // mask out bits defining kv count, only checks for maps but if it's not a map we don't really care.
-        return (result.value() & 0xE0) == 0xA0;
+        return (input & 0xE0) == 0xA0;
     }
 
+    bool isAligned(size_t size) {
+        /*  first condition is a 0 check, second is a bitwise operation,
+            powers of two only have one bit set, so when we -1 it forces every lower bit to flip.
+            then we can AND it against the original.
+            https://stackoverflow.com/a/33083952
+        */
+        return size && !(size & (size - 1));
+    }
+    
     std::string removeHeader(std::string_view input) {
         if (input.starts_with("0x")) {
             return std::string(input.substr(2));
@@ -37,70 +31,91 @@ namespace SimDetect::Evm {
         return std::string(input);
     }
 
-    std::optional<std::string> Disassembler::getMetadataString() {
-        auto cborLengthHex = stringBuffer_.substr(stringBuffer_.size() - 4, 4);
-       
-        std::uint16_t cborLength;
-        auto result = std::from_chars(cborLengthHex.data(), cborLengthHex.data() + cborLengthHex.size(), cborLength, 16);
+    std::optional<Byte> byteFromChars(std::string_view input) {
+        std::uint8_t byteVal;
+        
+        auto result = std::from_chars(input.data(), input.data() + input.size(), byteVal, 16);
         if (result.ec != std::errc{}) {
-            Logger::err() << "Error reading contract metadata";
+            Logger::err() << "Error reading byte";
             return std::nullopt;
         }
 
-        if (cborLength == 0 || cborLength > stringBuffer_.size() / 2) return std::nullopt; // 100% no metadata & prevent underflow
-       
-        auto cborMetadata = stringBuffer_.substr(stringBuffer_.size() - 4 - (cborLength * 2), cborLength * 2);
-       
-        if (!isCbor(cborMetadata.substr(0, 2))) return std::nullopt; 
-        
-        return std::string(cborMetadata); // string_view.data() is a pointer to the underlying string (or where we started the substr in this case), will read to end of bytecode if not explicitly constructing new string.
+        return byteVal;
     }
 
-    std::optional<std::uint8_t> Disassembler::getNextByte() {
-        if(cursor_ + 2 > stringBuffer_.size()) {
-            Logger::err() << "Out of range, cannot advance cursor. Suspending disassembly";
-            return std::nullopt;
+    std::optional<std::vector<Byte>> stringToByteArray(std::string_view input) {
+        std::uint64_t stringCursor{0};
+
+        std::vector<Byte> returnVal;
+        returnVal.reserve(input.size() / 2);
+
+        while (stringCursor < input.size()) {
+            auto result = byteFromChars(input.substr(stringCursor, 2));
+            if (!result.has_value()) return std::nullopt;
+
+            returnVal.push_back(result.value());
+            stringCursor += 2;
         }
 
-        auto returnVal = byteFromChars(stringBuffer_.substr(cursor_, 2));
-
-        cursor_ += 2;
         return returnVal;
     }
 
-    std::optional<std::vector<std::uint8_t>> Disassembler::getSomeBytes(uint8_t count) { // if you're trying to get more than 255 bytes you probably shouldn't
-        auto cursorSnapshot = cursor_;
-        
-        std::vector<std::uint8_t> bytesConsumed;
-        bytesConsumed.reserve(count);
+    // Uses memcpy so reads are O(1)    
+    template <typename T>
+    T Disassembler::immediateRead() {
+        if ((cursor_ + sizeof(T)) > contractBytecode_.size())
+            throw std::out_of_range("Attempted read beyond bytecode");
 
-        for (auto i{0uz}; i < count; ++i) {
-            auto result = getNextByte();
-            if (result.has_value()) {
-                bytesConsumed.push_back(result.value());
-            } else {
-                cursor_ = cursorSnapshot;
-                return std::nullopt;
-            }
-        }
+        T value;
+        std::memcpy(&value, contractBytecode_.data() + cursor_, sizeof(T));
 
-        return bytesConsumed;
+        cursor_ += sizeof(T);
+        // EVM is big endian
+        return std::byteswap(value);
+    }
+
+    const std::span<const Byte> Disassembler::readBlob(size_t count) {
+        if ((cursor_ + count) > contractBytecode_.size())
+            throw std::out_of_range("Attempted read beyond bytecode");
+
+        if (count > 32) // each evm item is 256 bit
+            throw std::out_of_range("Attempted read exceeds max size");        
+
+        std::span<const Byte> byteSpan{contractBytecode_.begin() + cursor_, count};
+
+        cursor_ += count;
+        return byteSpan;
     }
 
     Disassembler::Disassembler(std::string_view inputBuffer)
-        :stringBuffer_{removeHeader(inputBuffer)}
-        ,cursor_{0} 
+        :cursor_{0} 
         ,contract_{}
-        {}
+        {
+            auto cleanInput = removeHeader(inputBuffer);
+            contractBytecode_.reserve(cleanInput.size() / 2); 
+            
+            auto byteArray = stringToByteArray(removeHeader(inputBuffer));
+            
+            if (!byteArray.has_value())
+                throw std::logic_error("Invalid hex conversion in input buffer");
+
+            contractBytecode_ = byteArray.value();
+        }
 
     Contract Disassembler::disassemble() {
-        while (cursor_<stringBuffer_.size()) {
-            auto byte = getNextByte();
-            if (!byte.has_value()) {
-                return contract_;
+        while (cursor_ < contractBytecode_.size()) {
+            Byte byte = immediateRead<Byte>();
+            auto resolved = resolveInstruction(byte);
+            
+            ContextualizedInstruction instruction{resolved};
+            instruction.offset = cursor_ - 1; // cursor is incremented on the read so itll always be 1 ahead
+
+            if (resolved.paramLookahead > 0) {
+                auto blob = readBlob(resolved.paramLookahead);
+                instruction.param = blob;
             }
 
-            contract_.instructionSet.push_back(resolveInstruction(byte.value()));
+            contract_.instructionSet.push_back(instruction);
         }
 
         return contract_;

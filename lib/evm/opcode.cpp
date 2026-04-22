@@ -1,9 +1,7 @@
 #include <algorithm>
 #include <vector>
-#include <format>
 #include "opcode.h"
 #include "../common/constants.h"
-#include "../logger/logger.h"
 
 namespace SimDetect::Evm {
     // https://stackoverflow.com/a/48098543
@@ -276,7 +274,7 @@ namespace SimDetect::Evm {
     /* 0xFD */ { "REVERT", 0xFD, 2, 0, 0 },
     /* 0xFE */ { "INVALID", 0xFE, 0, 0, 0 },
     /* 0xFF */ { "SELFDESTRUCT", 0xFF, 1, 0, 0 }
-    };
+};
 
     const Instruction& resolveInstruction(std::uint8_t opcode) {
         return Instructions[opcode];

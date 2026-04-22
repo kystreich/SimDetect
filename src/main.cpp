@@ -12,14 +12,13 @@ int main() {
     }
 
     std::string line;
-    getline(file, line);
+    std::getline(file, line);
 
     auto disa = SimDetect::Evm::Disassembler{line};
     auto x = disa.disassemble();
- 
+  
+    // for (const auto& instruction : x.instructionSet) {
+    //     SimDetect::Logger::info() << std::format("{:x} | {:#04x} | {} > {}", instruction.offset, instruction.opcode, instruction.name, instruction.paramLookahead);
+    // }
     SimDetect::Logger::info() << std::format("Disassembled {} instructions", x.instructionSet.size());
-    
-    for (const auto& instruction : x.instructionSet) {
-        SimDetect::Logger::info() << std::format("{:#04x} | {} > {}", instruction.opcode, instruction.name, instruction.paramLookahead);
-    }
 }

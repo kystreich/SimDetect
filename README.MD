@@ -10,3 +10,4 @@ SimDetect is a simple EVM disassembler with some static analysis to detect simul
 | Resource | Use |
 | -------- | --- |
 | [EVM.codes](https://EVM.codes)| EVM instruction definitions, demystifies the yellow pages for those who suck at math (me) |
+| [EVM Illustrated](https://takenobu-hs.github.io/downloads/ethereum_evm_illustrated.pdf)| A super thorough writeup on EVM by [Takenobu T.](https://github.com/takenobu-hs)

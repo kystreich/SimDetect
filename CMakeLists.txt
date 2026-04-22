@@ -28,6 +28,8 @@ lib/evm/cfg/block.h
 lib/evm/cfg/block.cpp
 lib/evm/cfg/cfg.h
 lib/evm/cfg/cfg.cpp
+lib/util/hex.h
+lib/util/hex.cpp
 )
 
 add_executable(SimDetect ${SOURCES})
