@@ -7,11 +7,11 @@
 
 namespace SimDetect::Utils {
     std::string convert(std::span<const std::uint8_t> data) {
-        std::stringstream ss;
+        std::ostringstream ss;
         ss << std::hex << std::setfill('0');
-
-        std::ranges::for_each(data, [&](auto x) { ss << static_cast<int>(x); });
-
+        for (auto b : data) {
+            ss << std::setw(2) << static_cast<unsigned>(b);
+        }
         return ss.str();
     }
 }

@@ -2,7 +2,8 @@
 #include <charconv>
 #include <cassert>
 #include <cstring>
-#include <span>
+#include <algorithm>
+#include <iostream>
 #include "disassembler.h"
 #include "opcode.h"
 #include "../logger/logger.h"
@@ -12,15 +13,6 @@ namespace SimDetect::Evm {
     bool isCbor(Byte input) {
         // mask out bits defining kv count, only checks for maps but if it's not a map we don't really care.
         return (input & 0xE0) == 0xA0;
-    }
-
-    bool isAligned(size_t size) {
-        /*  first condition is a 0 check, second is a bitwise operation,
-            powers of two only have one bit set, so when we -1 it forces every lower bit to flip.
-            then we can AND it against the original.
-            https://stackoverflow.com/a/33083952
-        */
-        return size && !(size & (size - 1));
     }
     
     std::string removeHeader(std::string_view input) {
@@ -73,24 +65,47 @@ namespace SimDetect::Evm {
         // EVM is big endian
         return std::byteswap(value);
     }
-
+    
+    
     const std::span<const Byte> Disassembler::readBlob(size_t count) {
-        if ((cursor_ + count) > contractBytecode_.size())
-            throw std::out_of_range("Attempted read beyond bytecode");
-
         if (count > 32) // each evm item is 256 bit
             throw std::out_of_range("Attempted read exceeds max size");        
+        
+        // read either the count, or to the end if count overflows
+        count = std::min(count, contractBytecode_.size() - cursor_);
 
         std::span<const Byte> byteSpan{contractBytecode_.begin() + cursor_, count};
-
+        
         cursor_ += count;
         return byteSpan;
+    }
+    
+    std::optional<std::vector<Byte>> Disassembler::readMeta() {
+        if (contractBytecode_.size() < 2) return std::nullopt;
+
+        uint16_t cborLenRaw;
+        std::memcpy(&cborLenRaw, contractBytecode_.data() + contractBytecode_.size() - 2, sizeof(uint16_t)); // TODO: dont like this
+
+        uint16_t cborLen = std::byteswap(cborLenRaw);
+        if (cborLen == 0 || cborLen + 2 > contractBytecode_.size()) {
+            return std::nullopt;
+        }
+
+        auto cborStart = contractBytecode_.end() - cborLen - 2;
+        auto cborEnd = contractBytecode_.end() - 2;
+
+        if (!isCbor(*cborStart)) return std::nullopt;
+
+        std::vector<Byte> metaData(cborStart, cborEnd); // resizing can invalidate iterators - copy first
+        contractBytecode_.resize(contractBytecode_.size() - cborLen - 2);
+
+        return metaData;
     }
 
     Disassembler::Disassembler(std::string_view inputBuffer)
         :cursor_{0} 
         ,contract_{}
-        {
+        {            
             auto cleanInput = removeHeader(inputBuffer);
             contractBytecode_.reserve(cleanInput.size() / 2); 
             
@@ -100,6 +115,7 @@ namespace SimDetect::Evm {
                 throw std::logic_error("Invalid hex conversion in input buffer");
 
             contractBytecode_ = byteArray.value();
+            contract_.metadataHash = readMeta();
         }
 
     Contract Disassembler::disassemble() {

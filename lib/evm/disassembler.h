@@ -4,13 +4,12 @@
 #include <string_view>
 #include <vector>
 #include <optional>
-#include <string>
 #include "opcode.h"
 
 namespace SimDetect::Evm {
     struct Contract {
         std::vector<ContextualizedInstruction> instructionSet;
-        std::optional<std::string> metadataHash; // Some contracts have a hash which can be verified and resolved to IPFS/Swarm for metadata
+        std::optional<std::vector<Byte>> metadataHash; // Some contracts have a hash which can be verified and resolved to IPFS/Swarm for metadata
     };
     
     class Disassembler {
@@ -22,10 +21,11 @@ namespace SimDetect::Evm {
             template <typename T>
             T immediateRead();
             const std::span<const Byte> readBlob(size_t count);
+            std::optional<std::vector<Byte>> readMeta();
             
         public:
             explicit Disassembler(std::string_view inputBuffer);
-
+            
             Contract disassemble();
     };
 }
