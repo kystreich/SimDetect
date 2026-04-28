@@ -2,7 +2,6 @@
 #include <span>
 #include <sstream>
 #include <cassert>
-#include <algorithm>
 #include <iomanip>
 
 namespace SimDetect::Utils {

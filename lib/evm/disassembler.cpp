@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstring>
 #include <algorithm>
-#include <iostream>
 #include "disassembler.h"
 #include "opcode.h"
 #include "../logger/logger.h"

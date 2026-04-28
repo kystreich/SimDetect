@@ -1,7 +1,6 @@
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <iomanip>
 #include "../lib/logger/logger.h"
 #include "../lib/evm/disassembler.h"
 #include "../lib/util/hex.h"
@@ -16,8 +15,7 @@ int main() {
 
     std::string line{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 
-    auto disa = SimDetect::Evm::Disassembler{line};
-    
+    auto disa = SimDetect::Evm::Disassembler{line};    
     auto x = disa.disassemble();
   
     std::string output{""};
